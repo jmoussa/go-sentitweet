@@ -3,9 +3,13 @@
 ## Components
 
 **Config**: config module based in JSON (enter twitter credentials for use)
+
 **Controllers**: handle the API db call/logic for fetching tweets + scores
+
 **Data Pipelines**: orchestrate/run sentiment analysis and tweet crawl
+
 **Models**: DB Models (not of much use since transitioning to MongoDB)
+
 **Processors**: Functions available for use in the data pipeilines
 
 ## Architecture
