@@ -1,0 +1,18 @@
+{
+  "general": {
+    "consumerkey": "",
+    "consumersecret": "",
+    "bearer_token": "",
+    "accesstoken": "",
+    "accesssecret": ""
+  },
+  "stages": [
+    // Future plans to use config-based orchestration?
+    {
+      "name": "Store RAW data",
+      "description": "upload to database",
+      "controllerFile": "github.com/jmoussa/go-sentitweet/controllers/orchestrator.go",
+      "function": "store_raw_data"
+    }
+  ]
+}
