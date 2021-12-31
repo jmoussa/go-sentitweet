@@ -15,22 +15,35 @@ import (
 // Parse JSON config for use
 var cfg config.Config = config.ParseConfig()
 
-func producer(ctx context.Context, strings []string) (<-chan interface{}, error) {
-	outChannel := make(chan interface{})
-
+func generator(searchPhrase string, cfg config.Config) chan interface{} {
+	out := make(chan interface{})
 	go func() {
-		defer close(outChannel)
+		con := cfg.General
+		c := oauth1.NewConfig(con["consumerkey"], con["consumersecret"])
+		token := oauth1.NewToken(con["accesstoken"], con["accesssecret"])
+		httpClient := c.Client(oauth1.NoContext, token)
+		defer close(out)
 
-		for _, s := range strings {
-			select {
-			case <-ctx.Done():
-				return
-			case outChannel <- s:
-			}
+		// consume stream messages
+		client := twitter.NewClient(httpClient)
+		params := &twitter.StreamFilterParams{
+			Track:         []string{searchPhrase},
+			StallWarnings: twitter.Bool(true),
+		}
+		stream, err := client.Streams.Filter(params)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer stream.Stop()
+		demux := twitter.NewSwitchDemux()
+		demux.Tweet = func(tweet *twitter.Tweet) {
+			out <- tweet
+		}
+		for message := range stream.Messages {
+			demux.Handle(message)
 		}
 	}()
-
-	return outChannel, nil
+	return out
 }
 
 func sink(ctx context.Context, cancelFunc context.CancelFunc, values <-chan interface{}, errors <-chan error) {
@@ -48,11 +61,9 @@ func sink(ctx context.Context, cancelFunc context.CancelFunc, values <-chan inte
 		case _, ok := <-values:
 			if ok {
 				count += 1
-				if count%1000 == 0 {
+				if count%100 == 0 {
 					log.Printf("Tweet #: %d", count)
 				}
-				//tweet := val.(*twitter.Tweet)
-				//log.Printf("sink: %s", tweet.Text)
 			} else {
 				log.Print("done")
 				return
@@ -108,42 +119,7 @@ func step[In any, Out any](
 	}
 }
 
-func generator(searchPhrase string, cfg config.Config) chan interface{} {
-	out := make(chan interface{})
-	go func() {
-		con := cfg.General
-		c := oauth1.NewConfig(con["consumerkey"], con["consumersecret"])
-		token := oauth1.NewToken(con["accesstoken"], con["accesssecret"])
-		httpClient := c.Client(oauth1.NoContext, token)
-		defer close(out)
-
-		// consume stream messages
-		client := twitter.NewClient(httpClient)
-		params := &twitter.StreamFilterParams{
-			Track:         []string{searchPhrase},
-			StallWarnings: twitter.Bool(true),
-		}
-		stream, err := client.Streams.Filter(params)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer stream.Stop()
-		demux := twitter.NewSwitchDemux()
-		demux.Tweet = func(tweet *twitter.Tweet) {
-			//log.Printf("%+v\n-----------------------\n", tweet)
-			out <- tweet
-		}
-		for message := range stream.Messages {
-			demux.Handle(message)
-		}
-	}()
-	return out
-}
-
 func main() {
-	// TODO: replace with queue generator function that returns arrays from an external queue
-	// source := []string{"FOO", "BAR", "BAX"}
-	// generator will continue fetching from the queue until empty then will trigger long poll on the queue
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	/*
@@ -152,7 +128,7 @@ func main() {
 			log.Fatal(err)
 		}
 	*/
-	// use generator as initial producer (outputs a string channel)
+	// using generator as initial producer (outputs an interface{} channel)
 	sourceChannel := generator("omicron", cfg)
 	outputChannel := make(chan interface{})
 	errorChannel := make(chan error)
