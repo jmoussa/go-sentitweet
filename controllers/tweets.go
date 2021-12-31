@@ -22,20 +22,28 @@ type TweetSearchBody struct {
 func FindTweets(c *gin.Context) {
 	var requestBody TweetSearchBody
 	if err := c.BindJSON(&requestBody); err != nil {
-		log.Fatal(err)
+		//log.Fatalf("Error: %s", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "please provide a JSON Request Body"})
+		return
 	}
 	log.Println("Request: ", requestBody.SearchPhrase)
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
+
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
 	defer func() {
 		if err = client.Disconnect(ctx); err != nil {
 			panic(err)
 		}
 	}()
+
 	collection := client.Database("twitter-sentiment").Collection("tweets")
 	log.Printf("Searching: %s", requestBody.SearchPhrase)
-	filterCursor, err := collection.Find(ctx, bson.M{"basetweet.text": bson.M{"$regex": requestBody.SearchPhrase}})
+	searchParam := bson.M{}
+	if len(requestBody.SearchPhrase) > 0 {
+		searchParam = bson.M{"basetweet.text": bson.M{"$regex": requestBody.SearchPhrase}}
+	}
+	filterCursor, err := collection.Find(ctx, searchParam)
 	if err != nil {
 		log.Fatal(err)
 	}
