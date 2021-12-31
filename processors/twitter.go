@@ -2,7 +2,6 @@ package processors
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/dghubble/go-twitter/twitter"
@@ -18,15 +17,14 @@ type TweetWithScore struct {
 }
 
 func RunProc1Stage(s interface{}) (interface{}, error) {
-	// Takes in a string message, alters it and pushes updated message
-	log.Println("Proccessing Stage 1")
+	// Takes in an interface{} message, fetchest sentiment scores, and pushes updated message with scores
 	tweet := s.(*twitter.Tweet)
 	parseText := sentitext.Parse(tweet.Text, lexicon.DefaultLexicon)
 	results := sentitext.PolarityScore(parseText)
-	log.Println("Positive:", results.Positive)
-	log.Println("Negative:", results.Negative)
-	log.Println("Neutral:", results.Neutral)
-	log.Println("Compound:", results.Compound)
+	//log.Println("Positive:", results.Positive)
+	//log.Println("Negative:", results.Negative)
+	//log.Println("Neutral:", results.Neutral)
+	//log.Println("Compound:", results.Compound)
 	var scores map[string]float64
 	scores = map[string]float64{
 		"Positive": results.Positive,
@@ -37,8 +35,6 @@ func RunProc1Stage(s interface{}) (interface{}, error) {
 	var obj TweetWithScore
 	obj.BaseTweet = tweet
 	obj.SentimentScores = scores
-	log.Println("---------------------------------------")
-	//birds := result["birds"].(map[string]interface{})
 	return obj, nil
 }
 
@@ -54,8 +50,7 @@ func RunProc2Stage(s interface{}) (interface{}, error) {
 	collection := client.Database("twitter-sentiment").Collection("tweets")
 	collection.InsertOne(ctx, s)
 	// Takes in a string message, alters it and pushes updated message
-	tweet := s.(TweetWithScore)
-	log.Printf("Process 2: Text - %s\n--------------------------------\n", tweet.BaseTweet.Text)
-	// Upload to DB
+	//tweet := s.(TweetWithScore)
+	//log.Printf("Process 2: Text - %s\n--------------------------------\n", tweet.BaseTweet.Text)
 	return s, nil
 }
