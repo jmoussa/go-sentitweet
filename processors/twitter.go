@@ -16,7 +16,7 @@ type TweetWithScore struct {
 	SentimentScores map[string]float64
 }
 
-func RunProc1Stage(s interface{}) (interface{}, error) {
+func LexiconSentimentAnalysis(s interface{}) (interface{}, error) {
 	// Takes in an interface{} message, fetchest sentiment scores, and pushes updated message with scores
 	tweet := s.(*twitter.Tweet)
 	parseText := sentitext.Parse(tweet.Text, lexicon.DefaultLexicon)
@@ -38,7 +38,7 @@ func RunProc1Stage(s interface{}) (interface{}, error) {
 	return obj, nil
 }
 
-func RunProc2Stage(s interface{}) (interface{}, error) {
+func FormatAndUpload(s interface{}) (interface{}, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))

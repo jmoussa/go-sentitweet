@@ -11,7 +11,7 @@
     {
       "name": "Store RAW data",
       "description": "upload to database",
-      "controllerFile": "github.com/jmoussa/go-sentitweet/controllers/orchestrator.go",
+      "controllerFile": "github.com/jmoussa/go-sentitweet/api/orchestrator.go",
       "function": "store_raw_data"
     }
   ]

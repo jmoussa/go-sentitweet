@@ -4,6 +4,7 @@ import (
 	"context"
 	"log"
 	"runtime"
+	"sync/atomic"
 
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
@@ -16,15 +17,17 @@ import (
 var cfg config.Config = config.ParseConfig()
 
 func generator(searchPhrase string, cfg config.Config) chan interface{} {
+	// Starts up a generator stream of tweets into the outputted channel
 	out := make(chan interface{})
 	go func() {
+		defer close(out)
+
 		con := cfg.General
 		c := oauth1.NewConfig(con["consumerkey"], con["consumersecret"])
 		token := oauth1.NewToken(con["accesstoken"], con["accesssecret"])
 		httpClient := c.Client(oauth1.NoContext, token)
-		defer close(out)
 
-		// consume stream messages
+		// intialize stream
 		client := twitter.NewClient(httpClient)
 		params := &twitter.StreamFilterParams{
 			Track:         []string{searchPhrase},
@@ -32,9 +35,11 @@ func generator(searchPhrase string, cfg config.Config) chan interface{} {
 		}
 		stream, err := client.Streams.Filter(params)
 		if err != nil {
-			log.Fatalln(err)
+			log.Fatalf("Error querying stream, %s\n", err)
 		}
 		defer stream.Stop()
+
+		// Initialize demux for interface{} type processing to channel
 		demux := twitter.NewSwitchDemux()
 		demux.Tweet = func(tweet *twitter.Tweet) {
 			out <- tweet
@@ -44,6 +49,23 @@ func generator(searchPhrase string, cfg config.Config) chan interface{} {
 		}
 	}()
 	return out
+}
+
+func mergeAtomic(outputChan chan interface{}, cs ...<-chan interface{}) <-chan interface{} {
+	// Atomically dump each channel into the output channel and return output channel
+	var i int32
+	atomic.StoreInt32(&i, int32(len(cs)))
+	for _, c := range cs {
+		go func(c <-chan interface{}) {
+			for v := range c {
+				outputChan <- v
+			}
+			if atomic.AddInt32(&i, -1) == 0 {
+				close(outputChan)
+			}
+		}(c)
+	}
+	return outputChan
 }
 
 func sink(ctx context.Context, cancelFunc context.CancelFunc, values <-chan interface{}, errors <-chan error) {
@@ -62,7 +84,7 @@ func sink(ctx context.Context, cancelFunc context.CancelFunc, values <-chan inte
 			if ok {
 				count += 1
 				if count%100 == 0 {
-					log.Printf("Tweet #: %d", count)
+					log.Printf("Tweet count: %d", count)
 				}
 			} else {
 				log.Print("done")
@@ -88,7 +110,7 @@ func step[In any, Out any](
 	// parse through messages in input channel
 	for s := range inputChannel {
 		select {
-		// if cancelled, abort operation
+		// if cancelled, abort operation otherwise run while there's values in inputChannel
 		case <-ctx.Done():
 			log.Print("1 abort")
 			break
@@ -100,10 +122,11 @@ func step[In any, Out any](
 			break
 		}
 
-		// run a go function to handle processing
+		// start up go functions to parallelize processing to CPU Cound
 		go func(s In) {
 			// release the semaphore at the end of this concurrent process
 			defer sem1.Release(1)
+			// Take the result of the function and send to outputChannel
 			result, err := fn(s)
 			if err != nil {
 				errorChannel <- err
@@ -129,17 +152,23 @@ func main() {
 		}
 	*/
 	// using generator as initial producer (outputs an interface{} channel)
-	sourceChannel := generator("omicron", cfg)
-	outputChannel := make(chan interface{})
+	sourceChannel := generator("covid", cfg)
 	errorChannel := make(chan error)
-	//construct pipeline processing stages
+	// Run lexicon sentiment analysis concurrently with ML Sentiment Analysis
+	// then merge the results with the original document?
+
+	// Layer 1: Sentiment Analysis
+	layer1OutputChannel := make(chan interface{})
 	go func() {
-		step(ctx, sourceChannel, outputChannel, errorChannel, processors.RunProc1Stage)
+		step(ctx, sourceChannel, layer1OutputChannel, errorChannel, processors.LexiconSentimentAnalysis)
 	}()
-	// next stages are connected to each other
-	nextStageChannel := make(chan interface{})
+
+	// Layer 2: DB Upload
+	layer3OutputChannel := make(chan interface{})
 	go func() {
-		step(ctx, outputChannel, nextStageChannel, errorChannel, processors.RunProc2Stage)
+		step(ctx, layer1OutputChannel, layer3OutputChannel, errorChannel, processors.FormatAndUpload)
 	}()
-	sink(ctx, cancel, nextStageChannel, errorChannel)
+
+	// Sink
+	sink(ctx, cancel, layer3OutputChannel, errorChannel)
 }
