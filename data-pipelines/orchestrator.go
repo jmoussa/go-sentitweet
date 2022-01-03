@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"log"
+	"net/http"
 	"runtime"
 	"sync/atomic"
 
+	"github.com/arl/statsviz"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 	"github.com/jmoussa/go-sentitweet/config"
@@ -143,6 +145,12 @@ func step[In any, Out any](
 }
 
 func main() {
+	statsviz.RegisterDefault()
+	go func() {
+		log.Println("Navigate to: http://localhost:6060/debug/statsviz/ for metrics")
+		log.Println(http.ListenAndServe("localhost:6060", nil))
+	}()
+
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 	/*
