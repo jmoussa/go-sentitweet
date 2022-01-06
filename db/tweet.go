@@ -3,6 +3,7 @@ package db
 import (
 	"context"
 	"log"
+	"time"
 
 	"github.com/jmoussa/go-sentitweet/processors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -25,6 +26,33 @@ func CloseMongoClient(client *mongo.Client, ctx context.Context) {
 		return
 		//panic(err)
 	}
+}
+
+func FetchRecentTweets(client *mongo.Client, ctx context.Context, daysBack int) ([]processors.TweetWithScore, error, string) {
+	// Fetch tweets that have createdat after daysBack
+	collection := client.Database("twitter-sentiment").Collection("tweets")
+	now := time.Now()
+	date := now.AddDate(0, 0, -daysBack)
+	log.Printf("**DB Searching: %d days back after %s", daysBack, date.Format("Mon Jan 2 15:04:05 -0700 2006"))
+	searchParam := bson.M{"basetweet.createdat": bson.M{"$lte": date.Format("Mon Jan 2 15:04:05 -0700 2006")}}
+	// Acquire Query Cursor
+	findOptions := options.Find()
+	// -1 sorts descending
+	findOptions.SetSort(bson.D{{"basetweet.createdat", -1}})
+	filterCursor, err := collection.Find(ctx, searchParam, findOptions)
+	if err != nil {
+		log.Print(err)
+		return nil, err, "failed to apply DB Query"
+	}
+	defer filterCursor.Close(ctx)
+	// Run search w/filter
+	var tweets []processors.TweetWithScore
+	if err = filterCursor.All(ctx, &tweets); err != nil {
+		log.Print(err)
+		return nil, err, "failed to Search DB"
+	}
+	return tweets, nil, ""
+
 }
 
 func TextSearchQueryMongoClient(client *mongo.Client, ctx context.Context, searchPhrase string) ([]processors.TweetWithScore, error, string) {

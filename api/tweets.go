@@ -16,7 +16,8 @@ import (
 )
 
 type TweetSearchBody struct {
-	SearchPhrase string `json:"searchPhrase"`
+	SearchPhrase string `json:"searchPhrase,omitempty"`
+	DaysBack     int    `json:"daysBack,omitempty"`
 }
 
 // POST /tweets
@@ -41,7 +42,15 @@ func FindTweets(c *gin.Context) {
 	// defer closing of db conn
 	defer db.CloseMongoClient(client, ctx)
 	// text search
-	tweets, err, additional_desc := db.TextSearchQueryMongoClient(client, ctx, requestBody.SearchPhrase)
+	var (
+		tweets          []processors.TweetWithScore
+		additional_desc string
+	)
+	if requestBody.SearchPhrase != "" {
+		tweets, err, additional_desc = db.TextSearchQueryMongoClient(client, ctx, requestBody.SearchPhrase)
+	} else if requestBody.DaysBack > 0 {
+		tweets, err, additional_desc = db.FetchRecentTweets(client, ctx, requestBody.DaysBack)
+	}
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("%s: %s", additional_desc, err)})
 		return

@@ -114,7 +114,7 @@ func step[In any, Out any](
 		select {
 		// if cancelled, abort operation otherwise run while there's values in inputChannel
 		case <-ctx.Done():
-			log.Print("1 abort")
+			log.Println("1 abort")
 			break
 		default:
 		}
@@ -147,8 +147,8 @@ func step[In any, Out any](
 func main() {
 	statsviz.RegisterDefault()
 	go func() {
-		log.Println("Navigate to: http://localhost:6060/debug/statsviz/ for metrics")
-		log.Println(http.ListenAndServe("localhost:6060", nil))
+		log.Println("Navigate to: http://localhost:6070/debug/statsviz/ for metrics")
+		log.Println(http.ListenAndServe("localhost:6070", nil))
 	}()
 
 	ctx, cancel := context.WithCancel(context.Background())

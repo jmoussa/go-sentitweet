@@ -16,6 +16,8 @@ func main() {
 	// use statsviz for program health visualization
 	statsviz.RegisterDefault()
 	go func() {
+		// stat viz for the server is available on port :6060
+		log.Println("Navigate to: http://localhost:6060/debug/statsviz/ for metrics")
 		log.Println(http.ListenAndServe("localhost:6060", nil))
 	}()
 	r.Run()
