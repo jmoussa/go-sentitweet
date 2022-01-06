@@ -5,6 +5,7 @@ import (
 	"log"
 	"time"
 
+	"github.com/jmoussa/go-sentitweet/config"
 	"github.com/jmoussa/go-sentitweet/processors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -13,7 +14,8 @@ import (
 
 func OpenMongoClient(ctx context.Context) (*mongo.Client, error) {
 	// MongoDB Connection
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	var cfg config.Config = config.ParseConfig()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.General["mongo_url_string"]))
 	if err != nil {
 		return client, err
 	}
