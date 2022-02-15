@@ -2,8 +2,10 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"runtime"
 	"sync/atomic"
 
@@ -11,6 +13,7 @@ import (
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
 	"github.com/jmoussa/go-sentitweet/config"
+	"github.com/jmoussa/go-sentitweet/monitoring"
 	"github.com/jmoussa/go-sentitweet/processors"
 	"golang.org/x/sync/semaphore"
 )
@@ -43,6 +46,7 @@ func generator(searchPhrase string, cfg config.Config) chan interface{} {
 
 		// Initialize demux for interface{} type processing to channel
 		demux := twitter.NewSwitchDemux()
+		log.Println("Searching for:", searchPhrase)
 		demux.Tweet = func(tweet *twitter.Tweet) {
 			out <- tweet
 		}
@@ -102,6 +106,7 @@ func step[In any, Out any](
 	outputChannel chan Out,
 	errorChannel chan error,
 	fn func(In) (Out, error),
+	loggingTrace string,
 ) {
 	defer close(outputChannel)
 
@@ -124,10 +129,26 @@ func step[In any, Out any](
 			break
 		}
 
-		// start up go functions to parallelize processing to CPU Cound
+		// start up go functions to parallelize processing to CPU Count
 		go func(s In) {
 			// release the semaphore at the end of this concurrent process
 			defer sem1.Release(1)
+			msg, err := json.Marshal(s)
+			if err != nil {
+				log.Println("Error marshalling: ", err)
+			}
+			msgStr := string(msg)
+			// send and schedule start and stop log messages to SNS
+			log := monitoring.Log{
+				Message:   msgStr,
+				Level:     "INFO",
+				Type:      "Start",
+				Timestamp: monitoring.GetTimestamp(),
+			}
+			monitoring.SendLogMessageToSNS(log)
+			log.Type = "Stop"
+			defer monitoring.SendLogMessageToSNS(log)
+
 			// Take the result of the function and send to outputChannel
 			result, err := fn(s)
 			if err != nil {
@@ -146,6 +167,17 @@ func step[In any, Out any](
 
 func main() {
 	statsviz.RegisterDefault()
+
+	// extract search phrase from command line arguments
+	var defaultSearchPhrase string
+	argsWithoutProg := os.Args[1:]
+	if len(argsWithoutProg) == 0 {
+		defaultSearchPhrase = "#nft"
+		log.Println("No search phrase provided, using default:", defaultSearchPhrase)
+	} else {
+		defaultSearchPhrase = argsWithoutProg[0]
+	}
+
 	go func() {
 		log.Println("Navigate to: http://localhost:6070/debug/statsviz/ for metrics")
 		log.Println(http.ListenAndServe("localhost:6070", nil))
@@ -160,7 +192,7 @@ func main() {
 		}
 	*/
 	// using generator as initial producer (outputs an interface{} channel)
-	sourceChannel := generator("covid", cfg)
+	sourceChannel := generator(defaultSearchPhrase, cfg)
 	errorChannel := make(chan error)
 	// Run lexicon sentiment analysis concurrently with ML Sentiment Analysis
 	// then merge the results with the original document?
@@ -168,13 +200,13 @@ func main() {
 	// Layer 1: Sentiment Analysis
 	layer1OutputChannel := make(chan interface{})
 	go func() {
-		step(ctx, sourceChannel, layer1OutputChannel, errorChannel, processors.LexiconSentimentAnalysis)
+		step(ctx, sourceChannel, layer1OutputChannel, errorChannel, processors.LexiconSentimentAnalysis, "lexiconSentimentAnalysis")
 	}()
 
 	// Layer 2: DB Upload
 	layer3OutputChannel := make(chan interface{})
 	go func() {
-		step(ctx, layer1OutputChannel, layer3OutputChannel, errorChannel, processors.FormatAndUpload)
+		step(ctx, layer1OutputChannel, layer3OutputChannel, errorChannel, processors.FormatAndUpload, "formatAndUpload")
 	}()
 
 	// Sink

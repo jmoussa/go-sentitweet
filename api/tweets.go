@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/jmoussa/go-sentitweet/config"
 	"github.com/jmoussa/go-sentitweet/db"
 	"github.com/jmoussa/go-sentitweet/processors"
 	"go.mongodb.org/mongo-driver/bson"
@@ -43,7 +44,7 @@ func FindTweets(c *gin.Context) {
 	defer db.CloseMongoClient(client, ctx)
 	// text search
 	var (
-		tweets          []processors.TweetWithScore
+		tweets          []processors.TweetWithScoreMessage
 		additional_desc string
 	)
 	if requestBody.SearchPhrase != "" {
@@ -65,7 +66,8 @@ func FindTweets(c *gin.Context) {
 func FindTweet(c *gin.Context) { // Get model if exist
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI("mongodb://localhost:27017"))
+	var cfg config.Config = config.ParseConfig()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(cfg.General["mongo_url_string"]))
 	defer func() {
 		if err = client.Disconnect(ctx); err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": fmt.Sprintf("failed to disconnect mongo client with error: %s", err)})
@@ -78,7 +80,7 @@ func FindTweet(c *gin.Context) { // Get model if exist
 	if err != nil {
 		log.Fatal(err)
 	}
-	var tweets []processors.TweetWithScore
+	var tweets []processors.TweetWithScoreMessage
 	if err = filterCursor.All(ctx, &tweets); err != nil {
 		log.Fatal(err)
 	}

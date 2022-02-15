@@ -8,23 +8,35 @@
 
 **Data Pipelines**: orchestrate/run tweet crawling and sentiment analysis
 
-**Models**: DB Models (not much use since transitioning to MongoDB)
+**DB**: DB-specific connection and query logic
 
-**Processors**: Functions available for use in the data pipeilines
+**Monitoring**: monitoring and logging utilities (using AWS SNS for live-streaming insights through SQS Queue subscriptions)
+
+**Processors**: Functions available for use in the data pipelines to perform mutations on the data
 
 ## Architecture
 
 There are two main pieces of architecture
+
 - API
 - Sentiment Analysis/Data Uploader
 
+Additionally there's a monitoring module that will log each message and publish it to an SNS topic for streaming behind the API
+
 To run the API (on port :8080):
+
 ```bash
+cd go-sentitweet
+export CONFIG_LOCATION=$(pwd)/config.json
+export PROJECT_ENV=local
 go run main.go
 ```
 
 To run the content fetching and sentiment analysis pipeline:
+
 ```bash
+cd go-sentitweet
+export CONFIG_LOCATION=$(pwd)/config.json
+export PROJECT_ENV=local
 go run data-pielines/orchestrator.go
 ```
-

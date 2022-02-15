@@ -14,6 +14,9 @@ require (
 )
 
 require (
+	github.com/aws/aws-sdk-go v1.42.52 // indirect
+	github.com/cdipaolo/goml v0.0.0-20210723214924-bf439dd662aa // indirect
+	github.com/cdipaolo/sentiment v0.0.0-20200617002423-c697f64e7f10 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.2 // indirect
 	github.com/dghubble/sling v1.4.0 // indirect
 	github.com/fsnotify/fsnotify v1.5.1 // indirect
@@ -27,6 +30,7 @@ require (
 	github.com/google/go-querystring v1.1.0 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
+	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/leodido/go-urn v1.2.0 // indirect
@@ -42,6 +46,7 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
+	github.com/tjgq/broadcast v0.0.0-20140913210940-9d7fb01523c6 // indirect
 	github.com/ugorji/go/codec v1.1.7 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.0.2 // indirect
