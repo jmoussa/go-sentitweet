@@ -13,6 +13,7 @@ func main() {
 	r := gin.Default()
 	r.POST("/tweets", api.FindTweets)
 	r.GET("/tweet/:id", api.FindTweet)
+	r.GET("/logs", api.PipeLogs)
 	// use statsviz for program health visualization
 	statsviz.RegisterDefault()
 	go func() {

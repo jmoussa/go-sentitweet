@@ -176,6 +176,7 @@ func main() {
 		log.Println("No search phrase provided, using default:", defaultSearchPhrase)
 	} else {
 		defaultSearchPhrase = argsWithoutProg[0]
+		log.Println("Searching Twitter for:", defaultSearchPhrase)
 	}
 
 	go func() {

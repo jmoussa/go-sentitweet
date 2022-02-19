@@ -32,11 +32,14 @@ func SendLogMessageToSNS(msgPtr Log) (sns.PublishOutput, error) {
 	topicArn := cfg.General["aws_topic_arn"]
 	msg, _ := json.Marshal(msgPtr)
 	msgStr := string(msg)
+	topic := cfg.General["aws_logging_topic"]
 	result, err := svc.Publish(&sns.PublishInput{
-		Message:  &msgStr,
-		TopicArn: &topicArn,
+		Message:        &msgStr,
+		MessageGroupId: &topic,
+		TopicArn:       &topicArn,
 	})
 	if err != nil {
+		fmt.Printf("*** Error publishing to SNS: %v\n", err)
 		fmt.Println(err.Error())
 		var emptyResult sns.PublishOutput
 		return emptyResult, err

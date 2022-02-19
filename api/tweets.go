@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/session"
+	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/gin-gonic/gin"
 	"github.com/jmoussa/go-sentitweet/config"
 	"github.com/jmoussa/go-sentitweet/db"
@@ -88,4 +91,33 @@ func FindTweet(c *gin.Context) { // Get model if exist
 		log.Println(x.BaseTweet.Text)
 	}
 	c.JSON(http.StatusOK, gin.H{"data": tweets})
+}
+
+// GET /logs
+// Fetch Logs
+func PipeLogs(c *gin.Context) {
+	// Connect to sqs and send messages as they come in
+	sess := session.Must(session.NewSessionWithOptions(session.Options{
+		SharedConfigState: session.SharedConfigEnable,
+	}))
+	svc := sqs.New(sess)
+	queueURL := "https://sqs.us-east-1.amazonaws.com/462366532346/logging.fifo"
+	waitTime := int64(20)
+	result, err := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
+		QueueUrl: &queueURL,
+		AttributeNames: aws.StringSlice([]string{
+			"SentTimestamp",
+		}),
+		MaxNumberOfMessages: aws.Int64(1),
+		MessageAttributeNames: aws.StringSlice([]string{
+			"All",
+		}),
+		WaitTimeSeconds: &waitTime,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+	for _, message := range result.Messages {
+		log.Println(message)
+	}
 }
