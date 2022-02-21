@@ -145,9 +145,9 @@ func step[In any, Out any](
 				Type:      "Start",
 				Timestamp: monitoring.GetTimestamp(),
 			}
-			monitoring.SendLogMessageToSNS(log)
+			monitoring.SendLogMessageToSNS(&log)
 			log.Type = "Stop"
-			defer monitoring.SendLogMessageToSNS(log)
+			defer monitoring.SendLogMessageToSNS(&log)
 
 			// Take the result of the function and send to outputChannel
 			result, err := fn(s)

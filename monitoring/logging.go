@@ -11,7 +11,7 @@ import (
 )
 
 type Log struct {
-	Message   string `json:"message"`
+	Message   string `json:"log_message"`
 	Level     string `json:"level"`
 	Type      string `json:"source"`
 	Timestamp string `json:"timestamp"`
@@ -21,7 +21,7 @@ func GetTimestamp() string {
 	return fmt.Sprintf("%v", time.Now().UTC())
 }
 
-func SendLogMessageToSNS(msgPtr Log) (sns.PublishOutput, error) {
+func SendLogMessageToSNS(msgPtr *Log) (sns.PublishOutput, error) {
 	// Initialize a session that the SDK will use to load
 	// credentials from the shared credentials file. (~/.aws/credentials).
 	sess := session.Must(session.NewSessionWithOptions(session.Options{
@@ -30,7 +30,10 @@ func SendLogMessageToSNS(msgPtr Log) (sns.PublishOutput, error) {
 	svc := sns.New(sess)
 	var cfg config.Config = config.ParseConfig()
 	topicArn := cfg.General["aws_topic_arn"]
-	msg, _ := json.Marshal(msgPtr)
+	msg, err := json.Marshal(msgPtr)
+	if err != nil {
+		return sns.PublishOutput{}, err
+	}
 	msgStr := string(msg)
 	topic := cfg.General["aws_logging_topic"]
 	result, err := svc.Publish(&sns.PublishInput{

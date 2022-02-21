@@ -2,11 +2,8 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"log"
-	"net/http"
-	"time"
-
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
@@ -17,6 +14,9 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log"
+	"net/http"
+	"time"
 )
 
 type TweetSearchBody struct {
@@ -104,20 +104,34 @@ func PipeLogs(c *gin.Context) {
 	queueURL := "https://sqs.us-east-1.amazonaws.com/462366532346/logging.fifo"
 	waitTime := int64(20)
 	result, err := svc.ReceiveMessage(&sqs.ReceiveMessageInput{
-		QueueUrl: &queueURL,
-		AttributeNames: aws.StringSlice([]string{
-			"SentTimestamp",
-		}),
-		MaxNumberOfMessages: aws.Int64(1),
-		MessageAttributeNames: aws.StringSlice([]string{
-			"All",
-		}),
-		WaitTimeSeconds: &waitTime,
+		AttributeNames: []*string{
+			aws.String(sqs.MessageSystemAttributeNameSentTimestamp),
+		},
+		MessageAttributeNames: []*string{
+			aws.String(sqs.QueueAttributeNameAll),
+		},
+		QueueUrl:            &queueURL,
+		MaxNumberOfMessages: aws.Int64(10),
+		VisibilityTimeout:   &waitTime,
 	})
 	if err != nil {
 		log.Fatal(err)
 	}
+	data := make([]interface{}, 0)
 	for _, message := range result.Messages {
-		log.Println(message)
+		// remove excapes
+		raw_message, err := json.Marshal(*message.Body)
+		if err != nil {
+			log.Fatal(err)
+		}
+		var logjson interface{}
+		err = json.Unmarshal([]byte(raw_message), &logjson)
+		if err != nil {
+			log.Fatal(err)
+		}
+		// append to return slice
+		data = append(data, logjson)
 	}
+	fmt.Printf("Retrieved %d messages\n", len(data))
+	c.JSON(http.StatusOK, gin.H{"data": data})
 }
