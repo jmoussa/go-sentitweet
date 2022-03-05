@@ -45,7 +45,6 @@ cd go-sentitweet
 cp config/config.json.template config/config.json
 # fill in your config.json with your credentials
 export CONFIG_LOCATION=$(pwd)/config.json
-export PROJECT_ENV=local
 
 cd bin/ # or add to your $PATH
 # Run the sentiment analysis pipeline with no tweet search phrases (default #nft)
