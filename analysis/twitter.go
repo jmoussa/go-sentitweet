@@ -1,4 +1,4 @@
-package processors
+package analysis
 
 import (
 	"context"
@@ -71,6 +71,7 @@ func FormatAndUpload(s interface{}) (interface{}, error) {
 	return s, nil
 }
 
+// model trained on IMDB reviews
 func IMDBModelSentimentAnalysis(s interface{}) (interface{}, error) {
 	log.Println(s)
 	tweet := s.(*twitter.Tweet)

@@ -7,6 +7,10 @@ import (
 	"github.com/spf13/viper"
 )
 
+/*
+Configuration module that will import the values into a golang struct from config.json
+*/
+
 var (
 	configName  = "config"
 	configPaths = []string{

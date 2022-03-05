@@ -12,11 +12,16 @@ import (
 	"github.com/arl/statsviz"
 	"github.com/dghubble/go-twitter/twitter"
 	"github.com/dghubble/oauth1"
+	"github.com/jmoussa/go-sentitweet/analysis"
 	"github.com/jmoussa/go-sentitweet/config"
 	"github.com/jmoussa/go-sentitweet/monitoring"
-	"github.com/jmoussa/go-sentitweet/processors"
 	"golang.org/x/sync/semaphore"
 )
+
+/*
+Sentiment Analysis Pipeline
+Starts multiple goroutines to run the sentiment analysis pipeline concurrently on the number of cores available
+*/
 
 // Parse JSON config for use
 var cfg config.Config = config.ParseConfig()
@@ -201,13 +206,13 @@ func main() {
 	// Layer 1: Sentiment Analysis
 	layer1OutputChannel := make(chan interface{})
 	go func() {
-		step(ctx, sourceChannel, layer1OutputChannel, errorChannel, processors.LexiconSentimentAnalysis, "lexiconSentimentAnalysis")
+		step(ctx, sourceChannel, layer1OutputChannel, errorChannel, analysis.LexiconSentimentAnalysis, "lexiconSentimentAnalysis")
 	}()
 
 	// Layer 2: DB Upload
 	layer3OutputChannel := make(chan interface{})
 	go func() {
-		step(ctx, layer1OutputChannel, layer3OutputChannel, errorChannel, processors.FormatAndUpload, "formatAndUpload")
+		step(ctx, layer1OutputChannel, layer3OutputChannel, errorChannel, analysis.FormatAndUpload, "formatAndUpload")
 	}()
 
 	// Sink

@@ -4,19 +4,20 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log"
+	"net/http"
+	"time"
+
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/sqs"
 	"github.com/gin-gonic/gin"
+	analysis "github.com/jmoussa/go-sentitweet/analysis"
 	"github.com/jmoussa/go-sentitweet/config"
 	"github.com/jmoussa/go-sentitweet/db"
-	"github.com/jmoussa/go-sentitweet/processors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
-	"net/http"
-	"time"
 )
 
 type TweetSearchBody struct {
@@ -47,7 +48,7 @@ func FindTweets(c *gin.Context) {
 	defer db.CloseMongoClient(client, ctx)
 	// text search
 	var (
-		tweets          []processors.TweetWithScoreMessage
+		tweets          []analysis.TweetWithScoreMessage
 		additional_desc string
 	)
 	if requestBody.SearchPhrase != "" {
@@ -83,7 +84,7 @@ func FindTweet(c *gin.Context) { // Get model if exist
 	if err != nil {
 		log.Fatal(err)
 	}
-	var tweets []processors.TweetWithScoreMessage
+	var tweets []analysis.TweetWithScoreMessage
 	if err = filterCursor.All(ctx, &tweets); err != nil {
 		log.Fatal(err)
 	}

@@ -5,8 +5,8 @@ import (
 	"log"
 	"time"
 
+	"github.com/jmoussa/go-sentitweet/analysis"
 	"github.com/jmoussa/go-sentitweet/config"
-	"github.com/jmoussa/go-sentitweet/processors"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -30,7 +30,7 @@ func CloseMongoClient(client *mongo.Client, ctx context.Context) {
 	}
 }
 
-func FetchRecentTweets(client *mongo.Client, ctx context.Context, daysBack int) ([]processors.TweetWithScoreMessage, error, string) {
+func FetchRecentTweets(client *mongo.Client, ctx context.Context, daysBack int) ([]analysis.TweetWithScoreMessage, error, string) {
 	// Fetch tweets that have createdat after daysBack
 	collection := client.Database("twitter-sentiment").Collection("tweets")
 	now := time.Now()
@@ -48,7 +48,7 @@ func FetchRecentTweets(client *mongo.Client, ctx context.Context, daysBack int) 
 	}
 	defer filterCursor.Close(ctx)
 	// Run search w/filter
-	var tweets []processors.TweetWithScoreMessage
+	var tweets []analysis.TweetWithScoreMessage
 	if err = filterCursor.All(ctx, &tweets); err != nil {
 		log.Print(err)
 		return nil, err, "failed to Search DB"
@@ -57,7 +57,7 @@ func FetchRecentTweets(client *mongo.Client, ctx context.Context, daysBack int) 
 
 }
 
-func TextSearchQueryMongoClient(client *mongo.Client, ctx context.Context, searchPhrase string) ([]processors.TweetWithScoreMessage, error, string) {
+func TextSearchQueryMongoClient(client *mongo.Client, ctx context.Context, searchPhrase string) ([]analysis.TweetWithScoreMessage, error, string) {
 	// MongoDB Query
 	collection := client.Database("twitter-sentiment").Collection("tweets")
 	log.Printf("Searching: %s", searchPhrase)
@@ -73,7 +73,7 @@ func TextSearchQueryMongoClient(client *mongo.Client, ctx context.Context, searc
 	}
 	defer filterCursor.Close(ctx)
 	// Run search w/filter
-	var tweets []processors.TweetWithScoreMessage
+	var tweets []analysis.TweetWithScoreMessage
 	if err = filterCursor.All(ctx, &tweets); err != nil {
 		log.Print(err)
 		return nil, err, "failed to Search DB"

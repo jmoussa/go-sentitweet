@@ -2,9 +2,14 @@
 
 ## Components
 
-**Config**: config module based in JSON (enter twitter credentials for use)
+
+**Analysis**: Functions available for use in the data pipelines to perform mutations on the data
 
 **API**: handle the API call/logic for fetching tweets and sentiment scores
+
+**CLI**: twitter (tw) CLI utility logic for interacting with tweets and sentiment scores  
+
+**Config**: config module based in JSON (enter twitter credentials for use)
 
 **Data Pipelines**: orchestrate/run tweet crawling and sentiment analysis
 
@@ -12,7 +17,6 @@
 
 **Monitoring**: monitoring and logging utilities (using AWS SNS for live-streaming insights through SQS Queue subscriptions)
 
-**Processors**: Functions available for use in the data pipelines to perform mutations on the data
 
 ## Architecture
 
