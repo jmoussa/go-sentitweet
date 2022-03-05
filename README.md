@@ -1,4 +1,7 @@
-# Go Sentiment Analysis
+# Sentiment Analysis Platform
+
+> A data-acquisition and enrichment pipeline for loading tweets into a MongoDB database with an API on top to query it.
+> All wrapped in a neat CLI
 
 ## Components
 
@@ -23,11 +26,19 @@ There are two main pieces of architecture
 
 - API
 - Sentiment Analysis Pipelines
-- *(tw) Twitter CLI coming soon*
-    - *List, Search, and interact with Twitter through the CLI*
-    - *Access Sentiment Analysis Results
+- Custom (`tw`) CLI utility
+    - Run the sentiment analysis pipeline and the API webserver to access sentiment analysis results 
+    - *Coming Soon: List, Search, and interact with Twitter through the CLI*
 
-## Running Locally:
+
+## What the Pipeline Does
+
+the Pipeline streams in tweets (based on a search phrase) and performs sentiment analysis on the tweets, before loading all relevant info into the database.
+
+
+## Running Locally with the CLI:
+
+
 ```bash
 # Project Setup
 cd go-sentitweet
