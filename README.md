@@ -34,7 +34,9 @@ There are two main pieces of architecture
 ## What the Pipeline Does
 
 The pipeline streams in tweets (based on a search phrase) and performs sentiment analysis on the tweets, before loading all relevant info into the database.
+
 **The Process**:
+
 - Fetch Tweets (based on search term)
 - Score Tweets (using the `vader-go` Default Lexicon) 
 - Upload to DB (MongoDB)
