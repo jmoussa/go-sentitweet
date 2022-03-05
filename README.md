@@ -39,7 +39,7 @@ export PROJECT_ENV=local
 cd bin/ # or add to your $PATH
 # Run the sentiment analysis pipeline with no tweet search phrases (default #nft)
 ./tw pipeline 
-./tw pipeline "svelte"
+./tw pipeline --term="#amazon"
 
 # Run the RestAPI server (on port 8080)
 ./tw server
