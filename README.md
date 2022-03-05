@@ -29,17 +29,18 @@ There are two main pieces of architecture
 
 ## Running Locally:
 ```bash
+# Project Setup
 cd go-sentitweet
 cp config/config.json.template config/config.json
 # fill in your config.json with your credentials
 export CONFIG_LOCATION=$(pwd)/config.json
 export PROJECT_ENV=local
 
-# To run the sentiment analysis pipeline (will start a local instance that scrapes tweets and sends them to the queue)
-# TODO: include CLI command/flag to run the pipeline 
-go run data-pielines/twitter.go
+cd bin/ # or add to your $PATH
+# Run the sentiment analysis pipeline with no tweet search phrases (default #nft)
+./tw pipeline 
+./tw pipeline "svelte"
 
-# To run the API (on port 8080)
-# TODO: include CLI command/flag to run the api 
-go run main.go
+# Run the RestAPI server (on port 8080)
+./tw server
 ```

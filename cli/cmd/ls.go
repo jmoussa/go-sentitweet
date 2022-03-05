@@ -14,7 +14,7 @@ import (
 var lsCmd = &cobra.Command{
 	Use:   "ls",
 	Short: "Show tweet homefeed",
-	Long:  `Show tweet homefeed based on your account`,
+	Long:  `By default show tweet homefeed based on your account`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("ls called")
 	},

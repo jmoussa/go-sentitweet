@@ -1,11 +1,10 @@
-package main
+package data_pipelines
 
 import (
 	"context"
 	"encoding/json"
 	"log"
 	"net/http"
-	"os"
 	"runtime"
 	"sync/atomic"
 
@@ -170,18 +169,17 @@ func step[In any, Out any](
 	}
 }
 
-func main() {
+func RunTwitterPipeline(searchPhrase string) {
 	statsviz.RegisterDefault()
 
 	// extract search phrase from command line arguments
-	var defaultSearchPhrase string
-	argsWithoutProg := os.Args[1:]
-	if len(argsWithoutProg) == 0 {
-		defaultSearchPhrase = "#nft"
-		log.Println("No search phrase provided, using default:", defaultSearchPhrase)
+	var finalSearchPhrase string
+	if searchPhrase == "" {
+		finalSearchPhrase = "#nft"
+		log.Println("No search phrase provided, using default:", finalSearchPhrase)
 	} else {
-		defaultSearchPhrase = argsWithoutProg[0]
-		log.Println("Searching Twitter for:", defaultSearchPhrase)
+		finalSearchPhrase = searchPhrase
+		log.Println("Searching Twitter for:", finalSearchPhrase)
 	}
 
 	go func() {
@@ -198,7 +196,7 @@ func main() {
 		}
 	*/
 	// using generator as initial producer (outputs an interface{} channel)
-	sourceChannel := generator(defaultSearchPhrase, cfg)
+	sourceChannel := generator(finalSearchPhrase, cfg)
 	errorChannel := make(chan error)
 	// Run lexicon sentiment analysis concurrently with ML Sentiment Analysis
 	// then merge the results with the original document?
@@ -217,4 +215,8 @@ func main() {
 
 	// Sink
 	sink(ctx, cancel, layer3OutputChannel, errorChannel)
+}
+
+func main() {
+	RunTwitterPipeline("")
 }
