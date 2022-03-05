@@ -2,7 +2,6 @@
 
 ## Components
 
-
 **Analysis**: Functions available for use in the data pipelines to perform mutations on the data
 
 **API**: handle the API call/logic for fetching tweets and sentiment scores
@@ -23,24 +22,24 @@
 There are two main pieces of architecture
 
 - API
-- Sentiment Analysis/Data Uploader
+- Sentiment Analysis Pipelines
+- *(tw) Twitter CLI coming soon*
+    - *List, Search, and interact with Twitter through the CLI*
+    - *Access Sentiment Analysis Results
 
-Additionally there's a monitoring module that will log each message and publish it to an SNS topic for streaming behind the API
-
-To run the API (on port :8080):
-
+## Running Locally:
 ```bash
 cd go-sentitweet
+cp config/config.json.template config/config.json
+# fill in your config.json with your credentials
 export CONFIG_LOCATION=$(pwd)/config.json
 export PROJECT_ENV=local
+
+# To run the sentiment analysis pipeline (will start a local instance that scrapes tweets and sends them to the queue)
+# TODO: include CLI command/flag to run the pipeline 
+go run data-pielines/twitter.go
+
+# To run the API (on port 8080)
+# TODO: include CLI command/flag to run the api 
 go run main.go
-```
-
-To run the content fetching and sentiment analysis pipeline:
-
-```bash
-cd go-sentitweet
-export CONFIG_LOCATION=$(pwd)/config.json
-export PROJECT_ENV=local
-go run data-pielines/orchestrator.go
 ```
