@@ -47,17 +47,23 @@ Credentials are configured using JSON config file.
 
 
 ```bash
-# Project Setup
-cd go-sentitweet
+# Project Setup (inside project directory)
 cp config/config.json.template config/config.json
 # fill in your config.json with your credentials
 export CONFIG_LOCATION=$(pwd)/config.json
 
 cd bin/ # or add to your $PATH
 # Run the sentiment analysis pipeline with no tweet search phrases (default #nft)
+# runs in the foreground
 ./tw pipeline 
 ./tw pipeline --term="#amazon"
 
 # Run the RestAPI server (on port 8080)
 ./tw server
+
+# (Coming Soon) Output CSV of tweets and sentiment scores
+# running the pipeline chunking 100 tweets at a time to csv
+tw pipeline --output=csv --chunk-size=100 --term="#amazon" --output-path=./output/
+# query the API/database for tweets by time back
+tw query --days_back=5 --output=csv --output-path=./output/
 ```
